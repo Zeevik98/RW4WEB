@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: docker/orchestrator.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/var/log/red-whisperer:ro
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ORCHESTRATOR_HOST=0.0.0.0
+      - ORCHESTRATOR_PORT=8000
+    networks:
+      - red-whisperer-net
+
+  sql-injection-agent:
+    build:
+      context: .
+      dockerfile: docker/agent.Dockerfile
+    environment:
+      - AGENT_TYPE=sql_injection
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    networks:
+      - red-whisperer-net
+    depends_on:
+      - orchestrator
+
+  xss-agent:
+    build:
+      context: .
+      dockerfile: docker/agent.Dockerfile
+    environment:
+      - AGENT_TYPE=xss
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    networks:
+      - red-whisperer-net
+    depends_on:
+      - orchestrator
+
+  phishing-agent:
+    build:
+      context: .
+      dockerfile: docker/agent.Dockerfile
+    environment:
+      - AGENT_TYPE=phishing
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    networks:
+      - red-whisperer-net
+    depends_on:
+      - orchestrator
+
+networks:
+  red-whisperer-net:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local 
